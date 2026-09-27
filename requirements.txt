@@ -1,0 +1,23 @@
+openai>=1.40
+mss>=9.0
+Pillow>=10.2
+pydantic>=2.7
+python-dotenv>=1.0
+PyYAML>=6.0
+rich>=13.7
+
+# P1 语音链路
+sounddevice>=0.5
+numpy>=1.26
+webrtcvad-wheels>=2.0
+dashscope>=1.20
+
+# P2 图片入口（目录监控）
+watchdog>=4.0
+
+# P1 声纹识别（用于排除旁人说话误触发打断）
+resemblyzer>=0.1.4
+
+# resemblyzer 依赖的 webrtcvad 仍在 import pkg_resources，而 setuptools>=81
+# 已把它移除。锁在 81 以下，否则 webrtcvad / resemblyzer 会双双 import 失败。
+setuptools<81

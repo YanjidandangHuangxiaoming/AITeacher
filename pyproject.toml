@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xiaozhi-tutor"
+version = "0.1.0"
+description = "面向初中生的桌面 AI 家教机器人（P0：截图识题 + 分步引导讲解）"
+requires-python = ">=3.10"
+dependencies = [
+  "openai>=1.40",
+  "mss>=9.0",
+  "Pillow>=10.2",
+  "pydantic>=2.7",
+  "python-dotenv>=1.0",
+  "PyYAML>=6.0",
+  "rich>=13.7",
+  "sounddevice>=0.5",
+  "numpy>=1.26",
+  "webrtcvad-wheels>=2.0",
+  "dashscope>=1.20",
+  "watchdog>=4.0",
+  "resemblyzer>=0.1.4",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

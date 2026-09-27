@@ -1,0 +1,18 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# 运行期数据
+data/xiaozhi.db
+data/shots/*
+data/inbox/*
+data/processed/*
+data/cache/*
+# 声纹是生物特征数据，绝不能进版本库
+data/voiceprint.*
+!data/*/.gitkeep

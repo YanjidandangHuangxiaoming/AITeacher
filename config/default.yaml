@@ -1,0 +1,135 @@
+# 小智 AI 家教 · 主配置
+# 敏感信息用 ${ENV_VAR} 占位，实际值写在项目根目录的 .env 里。
+
+# ---------- P0 已启用 ----------
+
+llm:
+  provider: deepseek
+  base_url: https://api.deepseek.com
+  model: deepseek-chat
+  api_key: ${DEEPSEEK_API_KEY}
+  temperature: 0.5
+  timeout_s: 60
+
+vision:
+  provider: aliyun
+  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  model: qwen-vl-max
+  api_key: ${DASHSCOPE_API_KEY}
+  timeout_s: 120
+
+capture:
+  # 按回车截图后留给你的切屏时间（秒）
+  delay_s: 3
+  # 截图区域 [left, top, width, height]，null 表示主显示器全屏
+  region: null
+  # 截图目录要和 ingest 的投递目录分开，否则 /shot 的图会被再处理一次
+  output_dir: data/shots
+  # P2 才会接上全局热键，P0 用 /shot 命令
+  hotkey: ctrl+alt+q
+
+tutor:
+  grade: 初二
+  # socratic = 分步引导；direct = 直接给答案
+  style: socratic
+  max_followups: 5
+
+# ---------- P1 语音链路 ----------
+
+audio:
+  # 填设备名的一部分即可匹配（会按 WASAPI > DirectSound > MME 顺序逐个试开）。
+  # 换设备前先跑 python -m xiaozhi devices --probe 确认哪些能真正打开。
+  #
+  # 蓝牙耳机有两种 profile，只能二选一：
+  #   Hu tao Hands-Free AG Audio（HFP）→ 麦和放音同时可用，WASAPI 下正好 16kHz
+  #                                      单声道，与本流水线采样率一致，且天然
+  #                                      隔绝回声（语音打断依赖这一点）
+  #   Hu tao Stereo（A2DP）           → 立体声音质好，但只有放音、没有麦克风
+  # 因此输入输出都指向 HFP 端点。想让程序跟随系统默认设备就改回 null。
+  input_device: Hands-Free AG Audio
+  output_device: Hands-Free AG Audio
+  sample_rate: 16000
+  frame_ms: 30
+  queue_frames: 64
+
+wake:
+  # 用 ASR 关键词唤醒：识别到这句话里出现该词即唤醒
+  enabled: true
+  word: 小智小智
+  # ASR 常把"小智"识别成同音字（实测出现过"小志小志""这小志"），
+  # 这些写法同样算唤醒。发现还有漏的写法，往这里加就行。
+  variants:
+    - 小志
+    - 小知
+    - 小致
+    - 小至
+    - 小制
+
+vad:
+  aggressiveness: 3       # 0 最宽松、3 最严格；调高可以滤掉更多环境噪声
+  preroll_ms: 300         # 保留语音起始前的前导帧，防止吃掉第一个字
+  min_speech_ms: 250      # 连续人声达到该时长才算开始说话
+  silence_ms: 800         # 静音达到该时长判定"说完了"
+  max_utterance_s: 30     # 单次说话上限，超过强制截断
+  idle_timeout_s: 15      # 聆听中静默超时后回到待唤醒
+
+interrupt:
+  enabled: true
+  # voiceprint = 先静音收集语音做声纹比对，确认是本人后才真打断（推荐）
+  # vad        = 检测到人声立刻打断（响应最快，但旁人说话也会打断）
+  # off        = 关闭打断
+  mode: voiceprint
+  require_headset: true   # 使用蓝牙耳机，可放心开 VAD 打断
+  verify_ms: 600          # 声纹判定所需的语音长度；只影响"认错人"时的停顿长短
+
+voiceprint:
+  enabled: true
+  path: data/voiceprint
+  # 余弦相似度阈值。留 null = 用注册时自动标定的值（推荐）
+  # 觉得别人说话还是能打断 → 调高；觉得你自己打断不灵 → 调低，比如 0.70
+  threshold: null
+  enroll_seconds: 15
+  min_seconds: 0.5        # 短于该时长的语音不做判定，直接放行
+
+asr:
+  provider: aliyun
+  model: paraformer-realtime-v2
+  api_key: ${DASHSCOPE_API_KEY}
+
+tts:
+  provider: aliyun
+  model: cosyvoice-v2
+  voice: longxiaochun_v2
+  speed: 1.0
+  api_key: ${DASHSCOPE_API_KEY}
+  timeout_s: 30
+
+# ---------- P2 图片入口 ----------
+
+ingest:
+  # 自动定位微信「文件」通道的存盘目录并加入监控。
+  # 注意：那个目录里混着**所有聊天**收到的文件，同学发给你的图片也会一并进来，
+  # 只是会提示你「收到新图片」，按回车才讲，不会直接开讲。
+  watch_wechat: true
+
+  # 额外监控的图片目录（含子目录）。data/inbox 始终会被监控，不用写在这里。
+  watch_dirs: []
+
+  extensions:
+    - .jpg
+    - .jpeg
+    - .png
+    - .bmp
+    - .webp
+  # 等文件写完的最长时间（微信/浏览器是分块落盘的，写一半读会得到坏图）
+  settle_timeout_s: 5
+
+  # 局域网网页上传：手机浏览器打开终端里显示的地址，直接拍照传题。
+  # 手机和电脑要在同一个 WiFi 下。
+  upload:
+    enabled: true
+    port: 8000
+    max_mb: 20
+
+store:
+  path: data/xiaozhi.db
